@@ -10,6 +10,9 @@ import { CornerDownLeft, Save, Play } from "lucide-react";
 export default function MainLayout() {
   const [output, setOutput] = useState("");
   const [code, setCode] = useState("");
+  const [language, setLanguage] = useState("javascript");
+  const [isRunning, setIsRunning] = useState(false);
+  const [input, setInput] = useState("");
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[#0f1117] text-zinc-200 font-sans antialiased">
       {/* Top Bar Navigation */}
@@ -37,19 +40,46 @@ export default function MainLayout() {
                   <Save size={13} className="text-zinc-400" />
                   Save Code
                 </button>
+
                 <button
-                  onClick={() => {
-                    setOutput("Code executed successfully 🚀");
+                  onClick={async () => {
+                    try {
+                      setIsRunning(true);
+                      const response = await fetch("/api/execute", {
+                        method: "POST",
+                        headers: {
+                          "Content-Type": "application/json",
+                        },
+                        body: JSON.stringify({
+                          code,
+                          language,
+                          input,
+                        }),
+                      });
+
+                      const data = await response.json();
+
+                      setOutput(data.output);
+                      setIsRunning(false);
+                    } catch (error) {
+                      setOutput("Something went wrong");
+                      setIsRunning(false);
+                    }
                   }}
                   className="h-7 px-4 text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl flex items-center gap-1.5 shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/40 transition-all duration-200 hover:scale-[1.03] active:scale-[0.98]"
                 >
                   <Play size={11} fill="currentColor" />
-                  Run
+                  {isRunning ? "Running..." : "Run"}
                 </button>
               </div>
             </div>
-            <EditorPanel code={code} setCode={setCode} />
-            <ConsolePanel output={output} />
+            <EditorPanel
+              code={code}
+              setCode={setCode}
+              language={language}
+              setLanguage={setLanguage}
+            />
+            <ConsolePanel output={output} input={input} setInput={setInput} />
           </div>
 
           {/* Inside Chat Stream Message Bubble Wrapper */}

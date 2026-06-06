@@ -3,8 +3,42 @@
 import { useState } from "react";
 import Editor from "@monaco-editor/react";
 
-export default function EditorPanel({ code, setCode })  {
-  const [language, setLanguage] = useState("javascript");
+export default function EditorPanel({ code, setCode, language, setLanguage }) {
+  const templates = {
+    javascript: `function main() {
+
+}
+
+main();
+`,
+
+    python: `def main():
+    pass
+
+main()
+`,
+
+    cpp: `#include <iostream>
+using namespace std;
+
+int main() {
+
+    return 0;
+}
+`,
+
+    java: `public class Main {
+    public static void main(String[] args) {
+
+    }
+}
+`,
+  };
+  
+  const handleLanguageChange = (lang: keyof typeof templates) => {
+    setLanguage(lang);
+    setCode(templates[lang]);
+  };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
@@ -13,7 +47,9 @@ export default function EditorPanel({ code, setCode })  {
         {/* Language Selector */}
         <select
           value={language}
-          onChange={(e) => setLanguage(e.target.value)}
+          onChange={(e) =>
+            handleLanguageChange(e.target.value as keyof typeof templates)
+          }
           className="bg-[#1a1a1a] border border-white/10 text-xs px-2 py-1 rounded text-zinc-300 outline-none"
         >
           <option value="javascript">JavaScript</option>
