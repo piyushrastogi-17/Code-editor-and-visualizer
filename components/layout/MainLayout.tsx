@@ -90,7 +90,7 @@ export default function MainLayout() {
               instantly.
             </div>
           </div>
-          <AiChatPanel />
+          <AiChatPanel code={code} language={language} output={output} />
 
           {/* Premium LeetCode Style Action Input element prompt box */}
           <div className="p-2 border-t border-white/10 bg-[#1a1a1a]">

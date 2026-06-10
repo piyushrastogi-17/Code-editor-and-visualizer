@@ -1,56 +1,86 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
-    // 1. Frontend se aane wale prompt ko read karna
-    const { prompt } = await req.json();
+    const { prompt, code, language, output } = await req.json();
 
-    if (!prompt) {
+    // Validation
+    if (!prompt?.trim()) {
       return NextResponse.json(
-        { reply: "Bhai, prompt khali hai!" },
-        { status: 400 }
+        {
+          reply: "Please enter a message.",
+        },
+        {
+          status: 400,
+        }
       );
     }
 
-    // 2. Environment variable se API Key nikalna
     const apiKey = process.env.GEMINI_API_KEY;
 
     if (!apiKey) {
-      console.error("🚨 Error: GEMINI_API_KEY aapki .env.local file me nahi mili!");
+      console.error("GEMINI_API_KEY is missing");
+
       return NextResponse.json(
-        { reply: "Server error: API Key missing hai. Apni .env.local file check karein." },
-        { status: 500 }
+        {
+          reply: "Server configuration error.",
+        },
+        {
+          status: 500,
+        }
       );
     }
 
-    // 3. Gemini AI ko initialize karna aur model select karna
     const genAI = new GoogleGenerativeAI(apiKey);
+
     const model = genAI.getGenerativeModel({
-      model: "gemini-3.5-flash", // Bilkul sahi aur latest stable model name
+      model: "gemini-2.5-flash",
     });
 
-    // 4. Content generate karna aur response ko await karna
-    const result = await model.generateContent(prompt);
-    const response = await result.response.text(); 
+    const fullPrompt = `
+You are an expert coding assistant and programming mentor.
 
-    // 5. Frontend ko response bhejna
+Analyze the provided code and answer the user's question.
+
+Programming Language:
+${language || "Unknown"}
+
+Code:
+${code || "No code provided"}
+
+Console Output:
+${output || "No output available"}
+
+User Question:
+${prompt}
+
+Instructions:
+- Explain clearly and professionally.
+- If there is an error, identify the cause and provide a fix.
+- If the user asks for code explanation, explain step-by-step.
+- If optimization is possible, suggest improvements.
+- Mention time complexity when relevant.
+- Keep answers concise but informative.
+`;
+
+    const result = await model.generateContent(fullPrompt);
+
+    const response = result.response.text();
+
     return NextResponse.json({
       reply: response,
     });
+  } catch (error) {
+  console.error("AI Route Error:", error);
 
-  } catch (error: unknown) {
-    // TypeScript safe error handling ke liye
-    console.error("🚨 Terminal Error Detail:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-
-    return NextResponse.json(
-      {
-        reply: `Kuch gadbad hui hai: ${errorMessage}`,
-      },
-      {
-        status: 500,
-      }
-    );
-  }
+  return NextResponse.json(
+    {
+      reply: error instanceof Error ? error.message : "Unknown Error",
+    },
+    {
+      status: 500,
+    }
+  );
+}
 }

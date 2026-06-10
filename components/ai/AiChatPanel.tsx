@@ -1,22 +1,41 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
+import ReactMarkdown from "react-markdown";
 import { Sparkles, Send } from "lucide-react";
 
-export default function AiChatPanel() {
+interface AiChatPanelProps {
+  code: string;
+  language: string;
+  output: string;
+}
+
+export default function AiChatPanel({
+  code,
+  language,
+  output,
+}: AiChatPanelProps) {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
       content: "Hi! How can I help you with your code today?",
     },
   ]);
-
+  
   const [input, setInput] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+  messagesEndRef.current?.scrollIntoView({
+    behavior: "smooth",
+  });
+}, [messages, isLoading]);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
+  const handleSend = async (customPrompt?: string) => {
+    if (!customPrompt && !input.trim()) return;
 
-    const userMessage = input;
+    const message = customPrompt || input;
+    const userMessage = message;
 
     // User message add karo
     setMessages((prev) => [
@@ -28,6 +47,7 @@ export default function AiChatPanel() {
     ]);
 
     setInput("");
+    setIsLoading(true);
 
     try {
       const response = await fetch("/api/ai/chat", {
@@ -37,6 +57,9 @@ export default function AiChatPanel() {
         },
         body: JSON.stringify({
           prompt: userMessage,
+          code,
+          language,
+          output,
         }),
       });
 
@@ -60,12 +83,13 @@ export default function AiChatPanel() {
           content: "Failed to connect to AI service.",
         },
       ]);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="w-[320px] xl:w-[360px] bg-gradient-to-b from-[#1a1d29] to-[#11131a] flex flex-col overflow-hidden rounded-2xl border border-white/10">
-      
       {/* Header */}
       <div className="h-9 border-b border-white/10 px-3 flex items-center gap-2 bg-[#262626]">
         <Sparkles size={12} className="text-amber-500" />
@@ -85,9 +109,44 @@ export default function AiChatPanel() {
                 : "bg-zinc-800 text-zinc-200"
             }`}
           >
-            {msg.content}
+            <ReactMarkdown>{msg.content}</ReactMarkdown>
           </div>
         ))}
+
+        {isLoading && (
+          <div className="bg-zinc-800 text-zinc-200 text-sm p-2 rounded-lg max-w-[90%]">
+            Thinking...
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+
+      {/* Quick Actions */}
+      <div className="p-2 flex flex-wrap gap-2 border-t border-white/10">
+        <button
+          onClick={() => handleSend("Explain my code step by step.")}
+          className="text-xs px-2 py-1 bg-zinc-700 rounded-md hover:bg-zinc-600"
+        >
+          Explain Code
+        </button>
+
+        <button
+          onClick={() =>
+            handleSend("Analyze the error in my code and suggest a fix.")
+          }
+          className="text-xs px-2 py-1 bg-zinc-700 rounded-md hover:bg-zinc-600"
+        >
+          Explain Error
+        </button>
+
+        <button
+          onClick={() =>
+            handleSend("Optimize my code and improve its complexity.")
+          }
+          className="text-xs px-2 py-1 bg-zinc-700 rounded-md hover:bg-zinc-600"
+        >
+          Optimize Code
+        </button>
       </div>
 
       {/* Input */}
@@ -98,11 +157,17 @@ export default function AiChatPanel() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           className="flex-1 bg-[#0d1117] text-white text-sm px-3 py-2 rounded-md outline-none"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSend();
+            }
+          }}
         />
 
         <button
-          onClick={handleSend}
-          className="bg-green-600 px-3 rounded-md flex items-center justify-center"
+          onClick={() => handleSend()}
+          disabled={isLoading}
+          className="bg-green-600 px-3 rounded-md flex items-center justify-center disabled:opacity-50"
         >
           <Send size={16} />
         </button>
