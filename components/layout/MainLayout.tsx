@@ -6,6 +6,7 @@ import EditorPanel from "../editor/EditorPanel";
 import ConsolePanel from "../editor/ConsolePanel";
 import AiChatPanel from "../ai/AiChatPanel";
 import { CornerDownLeft, Save, Play } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 export default function MainLayout() {
   const [output, setOutput] = useState("");
@@ -13,6 +14,35 @@ export default function MainLayout() {
   const [language, setLanguage] = useState("javascript");
   const [isRunning, setIsRunning] = useState(false);
   const [input, setInput] = useState("");
+  const { data: session } = useSession();
+
+  const handleSaveProject = async () => {
+    try {
+      const response = await fetch("/api/projects", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          title: "Untitled Project",
+          code,
+          language,
+          userEmail: session?.user?.email,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert("Project Saved Successfully!");
+      } else {
+        alert(data.error || "Failed to save project");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong");
+    }
+  };
   return (
     <div className="h-screen w-screen flex flex-col overflow-hidden bg-[#0f1117] text-zinc-200 font-sans antialiased">
       {/* Top Bar Navigation */}
@@ -36,7 +66,10 @@ export default function MainLayout() {
 
               {/* Right: Core CTA Actions */}
               <div className="flex items-center gap-2">
-                <button className="h-7 px-3 text-xs font-medium bg-zinc-800 border border-zinc-700/80 hover:bg-zinc-700/60 rounded text-zinc-300 flex items-center gap-1.5 transition-all active:scale-[0.98]">
+                <button
+                  onClick={handleSaveProject}
+                  className="h-7 px-3 text-xs font-medium bg-zinc-800 border border-zinc-700/80 hover:bg-zinc-700/60 rounded text-zinc-300 flex items-center gap-1.5 transition-all active:scale-[0.98]"
+                >
                   <Save size={13} className="text-zinc-400" />
                   Save Code
                 </button>
