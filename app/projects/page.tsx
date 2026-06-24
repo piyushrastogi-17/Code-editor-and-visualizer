@@ -54,6 +54,25 @@ export default function ProjectsPage() {
       alert("Project renamed successfully!");
     }
   };
+  const handleDelete = async (projectId: string) => {
+    const confirmed = confirm("Are you sure you want to delete this project?");
+
+    if (!confirmed) return;
+
+    const response = await fetch(`/api/projects?projectId=${projectId}`, {
+      method: "DELETE",
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      setProjects((prev) =>
+        prev.filter((project) => project._id !== projectId),
+      );
+
+      alert("Project deleted successfully!");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0f1117] text-white p-6">
@@ -81,6 +100,15 @@ export default function ProjectsPage() {
               className="mt-3 px-3 py-1 bg-blue-600 rounded text-sm"
             >
               Rename
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleDelete(project._id);
+              }}
+              className="mt-3 ml-2 px-3 py-1 bg-red-600 rounded text-sm"
+            >
+              Delete
             </button>
           </div>
         ))}

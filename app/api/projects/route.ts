@@ -106,3 +106,30 @@ export async function PUT(req: NextRequest) {
     );
   }
 }
+export async function DELETE(req: NextRequest) {
+  try {
+    await connectDB();
+
+    const { searchParams } = new URL(req.url);
+
+    const projectId = searchParams.get("projectId");
+
+    await Project.findByIdAndDelete(projectId);
+
+    return NextResponse.json({
+      success: true,
+      message: "Project deleted successfully",
+    });
+  } catch (error: unknown) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown Error",
+      },
+      { status: 500 }
+    );
+  }
+}
