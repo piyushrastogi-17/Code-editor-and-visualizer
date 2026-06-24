@@ -26,6 +26,35 @@ export default function ProjectsPage() {
     fetchProjects();
   }, []);
 
+  const handleRename = async (projectId: string, currentTitle: string) => {
+    const newTitle = prompt("Enter new project name:", currentTitle);
+
+    if (!newTitle) return;
+
+    const response = await fetch("/api/projects", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        projectId,
+        title: newTitle,
+      }),
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      setProjects((prev) =>
+        prev.map((project) =>
+          project._id === projectId ? { ...project, title: newTitle } : project,
+        ),
+      );
+
+      alert("Project renamed successfully!");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0f1117] text-white p-6">
       <h1 className="text-3xl font-bold mb-6">My Projects</h1>
@@ -44,6 +73,15 @@ export default function ProjectsPage() {
             <p className="text-zinc-400">Language: {project.language}</p>
 
             <p className="text-zinc-500 text-sm">{project.userEmail}</p>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleRename(project._id, project.title);
+              }}
+              className="mt-3 px-3 py-1 bg-blue-600 rounded text-sm"
+            >
+              Rename
+            </button>
           </div>
         ))}
       </div>

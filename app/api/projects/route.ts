@@ -75,3 +75,34 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+export async function PUT(req: NextRequest) {
+  try {
+    await connectDB();
+
+    const body = await req.json();
+
+    const project = await Project.findByIdAndUpdate(
+      body.projectId,
+      {
+        title: body.title,
+      },
+      { new: true }
+    );
+
+    return NextResponse.json({
+      success: true,
+      project,
+    });
+  } catch (error: unknown) {
+    return NextResponse.json(
+      {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Unknown Error",
+      },
+      { status: 500 }
+    );
+  }
+}
