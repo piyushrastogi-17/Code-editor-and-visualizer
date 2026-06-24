@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+
 import Navbar from "./Navbar";
 import Sidebar from "./Sidebar";
 import EditorPanel from "../editor/EditorPanel";
@@ -7,6 +7,8 @@ import ConsolePanel from "../editor/ConsolePanel";
 import AiChatPanel from "../ai/AiChatPanel";
 import { CornerDownLeft, Save, Play } from "lucide-react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
 export default function MainLayout() {
   const [output, setOutput] = useState("");
@@ -16,6 +18,32 @@ export default function MainLayout() {
   const [input, setInput] = useState("");
   const { data: session } = useSession();
 
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+  const projectId = searchParams.get("projectId");
+
+  if (!projectId) return;
+
+  const loadProject = async () => {
+    try {
+      const response = await fetch(
+        `/api/projects?projectId=${projectId}`
+      );
+
+      const data = await response.json();
+
+      if (data.success && data.project) {
+        setCode(data.project.code);
+        setLanguage(data.project.language);
+      }
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  loadProject();
+}, [searchParams]);
   const handleSaveProject = async () => {
     try {
       const response = await fetch("/api/projects", {

@@ -2,9 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Project from "@/models/Project";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
     await connectDB();
+
+    const { searchParams } = new URL(req.url);
+
+    const projectId = searchParams.get("projectId");
+
+    if (projectId) {
+      const project = await Project.findById(projectId);
+
+      return NextResponse.json({
+        success: true,
+        project,
+      });
+    }
 
     const projects = await Project.find().sort({
       createdAt: -1,
