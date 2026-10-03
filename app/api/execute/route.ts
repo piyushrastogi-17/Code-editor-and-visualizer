@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
 
       try {
         const output = await new Promise<string>((resolve, reject) => {
-          const compileCommand = `g++ "${filePath}" -o "${outputPath}"`;
+          const compileCommand = `"C:\\MinGW\\bin\\g++.exe" "${filePath}" -o "${outputPath}"`;
 
           console.log("Compile Command:", compileCommand);
 

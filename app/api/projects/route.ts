@@ -19,7 +19,11 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    const projects = await Project.find().sort({
+    const userEmail = searchParams.get("userEmail");
+
+    const filter = userEmail ? { userEmail } : {};
+
+    const projects = await Project.find(filter).sort({
       createdAt: -1,
     });
 
@@ -81,11 +85,14 @@ export async function PUT(req: NextRequest) {
 
     const body = await req.json();
 
+    const updateData: Record<string, string> = {};
+    if (body.title) updateData.title = body.title;
+    if (body.code !== undefined) updateData.code = body.code;
+    if (body.language) updateData.language = body.language;
+
     const project = await Project.findByIdAndUpdate(
       body.projectId,
-      {
-        title: body.title,
-      },
+      updateData,
       { new: true }
     );
 
